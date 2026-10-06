@@ -25,17 +25,19 @@ input[type=range]{padding:0;height:36px}
 const q=new URLSearchParams(location.search),G=q.get('g')||'main';
 let K=q.get('key')||localStorage.bk||'';if(!K)K=prompt('Control key')||'';localStorage.bk=K;
 const DS={bar:'#0d0d0f',text:'#ffffff',accent:'#d71920',scoreBg:'#f2f2f2',scoreText:'#111111',inn:'#18181b',font:'Barlow Condensed',radius:6,opacity:100,scale:100,logo:34,pos:'',strip:1,upper:1,shadow:1};
+const FONTS=['Barlow Condensed','Oswald','Roboto Condensed','Montserrat','Poppins','Inter','Teko','Rajdhani','Saira Condensed','Exo 2','Chakra Petch','Orbitron','Archivo Narrow','Big Shoulders Display','Bebas Neue','Anton','Russo One','Staatliches','Alfa Slab One','Bungee','Fjalla One'];
 const PRE={tnt:{},light:{bar:'#ffffff',text:'#111111',accent:'#1d4ed8',scoreBg:'#111111',scoreText:'#ffffff',inn:'#e8ebf0',radius:4,font:'Montserrat'},navy:{bar:'#0b1f3a',accent:'#f2b705',scoreBg:'#f2b705',scoreText:'#0b1f3a',inn:'#12305a',radius:3,font:'Oswald'},glass:{bar:'#101418',accent:'#0d9488',scoreBg:'#3a4350',scoreText:'#ffffff',inn:'#1b2128',radius:16,opacity:72,font:'Montserrat'}};
 const T=(n,a,c)=>({name:n,abbr:a,color:c,logo:''});
 let S={away:T('Away','AWY','#c8102e'),home:T('Home','HOM','#0c2340'),runs:{away:[],home:[]},H:{away:0,home:0},E:{away:0,home:0},
  inn:1,top:true,b:0,s:0,o:0,bases:[0,0,0],pc:0,lineup:{away:Array(9).fill(''),home:Array(9).fill('')},spot:{away:0,home:0},
- pitcher:{away:'',home:''},vis:{bug:1,lower:0,lineup:0,box:0},banner:'pitcher',nameMode:'full',lower:{title:'',sub:''},lineupSide:'away',ad:{ch:0,url:'',n:0},style:{...DS}};
+ pitcher:{away:'',home:''},vis:{bug:1,lower:0,lineup:0,box:0},banner:'pitcher',nameMode:'full',lower:{title:'',sub:''},lineupSide:'away',ad:{ch:0,url:'',n:0},style:{...DS},adset:{sound:0,sec:10},sponsor:{logo:'',bug:1},pre:{a:'',h:'',sub:''},brk:{title:'Gameday',note:''}};
+const norm=()=>{S.style=Object.assign({},DS,S.style);S.adset=Object.assign({sound:0,sec:10},S.adset);S.sponsor=Object.assign({logo:'',bug:1},S.sponsor);S.pre=Object.assign({a:'',h:'',sub:''},S.pre);S.brk=Object.assign({title:'Gameday',note:''},S.brk);S.vis=Object.assign({bug:1,lower:0,lineup:0,box:0,pre:0,brk:0},S.vis)};norm();
 let hist=[],ws,tab='live',ctl=false,got=false;
 const TABS={live:'Live',gfx:'Graphics',style:'Style',lineups:'Lineups',teams:'Teams',ads:'Ads'};
 const st=t=>document.getElementById('st').textContent=t,ls=(k,d)=>{try{return JSON.parse(localStorage[k])}catch{return d}};
 function conn(){ws=new WebSocket((location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/ws?g='+G+'&key='+encodeURIComponent(K));
  ws.onmessage=e=>{const m=JSON.parse(e.data);if('ctl'in m){ctl=m.ctl;st(ctl?'Live · '+G:'Wrong key — add ?key=… to the URL')}
-  if(m.state){S=m.state;S.style=Object.assign({},DS,S.style);render()}else if('ctl'in m&&ctl)push()};
+  if(m.state){S=m.state;norm();render()}else if('ctl'in m&&ctl)push()};
  ws.onclose=()=>{st('Reconnecting…');setTimeout(conn,1500)}}
 const push=()=>ws.readyState==1&&ws.send(JSON.stringify({state:S}));
 function commit(fn){hist.push(JSON.stringify(S));if(hist.length>60)hist.shift();fn();push();render()}
@@ -58,7 +60,7 @@ const inp=(l,p,v)=>`<label>${l}</label><input value="${(v??'').toString().replac
 const B=(l,f,c='')=>`<button class="${c}" onclick="${f}">${l}</button>`;
 function ss(k,v){S.style[k]=v;push()}
 function fit(){const p=document.getElementById('prev'),f=p.firstChild;if(f)f.style.transform='scale('+p.clientWidth/1920+')'}
-function logoUp(s,el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas'),m=160,k=Math.min(1,m/Math.max(i.width,i.height));c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);set(s+'.logo',c.toDataURL('image/png'))};i.src=r.result};r.readAsDataURL(f)}
+function logoUp(s,el,m=160){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas'),k=Math.min(1,m/Math.max(i.width,i.height));c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);set(s+'.logo',c.toDataURL('image/png'))};i.src=r.result};r.readAsDataURL(f)}
 function saveTeam(s){const l=ls('bk_teams',[]),t=JSON.parse(JSON.stringify(S[s])),i=l.findIndex(x=>x.name==t.name);i<0?l.push(t):l[i]=t;localStorage.bk_teams=JSON.stringify(l);render()}
 function useTeam(i,s){commit(()=>S[s]=ls('bk_teams',[])[i])}
 function delTeam(i){const l=ls('bk_teams',[]);l.splice(i,1);localStorage.bk_teams=JSON.stringify(l);render()}
@@ -78,9 +80,13 @@ live(){const bt=bat(),P=(s)=>`${S[s].abbr} ${sum(S.runs[s])}`;
  <section><h2>Hits and errors</h2><div class=g>${['away','home'].map(s=>`${B(S[s].abbr+' H +','act(\'hs\',\''+s+'\',1)')}${B(S[s].abbr+' H −','act(\'hs\',\''+s+'\',-1)')}${B(S[s].abbr+' E +','act(\'err\',\''+s+'\')')}`).join('')}</div>
  <small>H ${S.H.away}-${S.H.home} · E ${S.E.away}-${S.E.home}</small></section>
  <section><h2>On air</h2><div class=g>${B('Scorebug','tg(\'vis.bug\')',S.vis.bug?'on big':'big')}${['pitcher','batter','off'].map(m=>B('Banner: '+m,`set('banner','${m}')`,S.banner==m?'on':'')).join('')}</div></section>`},
-gfx(){return `<section><h2>On air</h2><div class=g>${B('Scorebug','tg(\'vis.bug\')',S.vis.bug?'on big':'big')}${B('Lower third','tg(\'vis.lower\')',S.vis.lower?'on big':'big')}${B('Lineup','tg(\'vis.lineup\')',S.vis.lineup?'on big':'big')}${B('Box score','tg(\'vis.box\')',S.vis.box?'on big':'big')}</div></section>
+gfx(){return `<section><h2>On air</h2><div class=g>${B('Scorebug','tg(\'vis.bug\')',S.vis.bug?'on big':'big')}${B('Lower third','tg(\'vis.lower\')',S.vis.lower?'on big':'big')}${B('Lineup','tg(\'vis.lineup\')',S.vis.lineup?'on big':'big')}${B('Box score','tg(\'vis.box\')',S.vis.box?'on big':'big')}${B('Pregame matchup','tg(\'vis.pre\')',S.vis.pre?'on big':'big')}${B('Inning break','tg(\'vis.brk\')',S.vis.brk?'on big':'big')}</div></section>
  <section><h2>Lower third</h2>${inp('Title','lower.title',S.lower.title)}${inp('Subtitle','lower.sub',S.lower.sub)}
  <div class=g style="margin-top:8px">${B('Batter card','commit(()=>S.lower={title:S.lineup[bat()][S.spot[bat()]],sub:S[bat()].name+\' · At bat\'})')}${B('Pitcher card','commit(()=>S.lower={title:S.pitcher[fld()],sub:S[fld()].name+\' · \'+S.pc+\' pitches\'})')}</div></section>
+ <section><h2>Sponsor logo</h2><div class=r>${S.sponsor.logo?`<img class=lg src="${S.sponsor.logo}">`:''}<input type=file accept="image/*" onchange="logoUp('sponsor',this,400)"></div>
+ <div class=g style="margin-top:8px">${B('Show on scorebug','tg(\'sponsor.bug\')',S.sponsor.bug?'on':'')}${B('Remove logo','set(\'sponsor.logo\',\'\')')}</div><small>The logo also appears on the pregame and inning break graphics.</small></section>
+ <section><h2>Pregame matchup</h2>${inp('Away record','pre.a',S.pre.a)}${inp('Home record','pre.h',S.pre.h)}${inp('Bottom line, such as the venue','pre.sub',S.pre.sub)}</section>
+ <section><h2>Inning break</h2>${inp('Title','brk.title',S.brk.title)}${inp('Bottom line (blank shows the pitcher)','brk.note',S.brk.note)}<small>Shows the upcoming half-inning, scores, hits and errors.</small></section>
  <section><h2>Lineup graphic</h2><div class=g>${['away','home'].map(s=>B(S[s].name,`set('lineupSide','${s}')`,S.lineupSide==s?'on':'')).join('')}</div></section>
  <section><h2>Team names on the bug</h2><div class=g>${B('Full name','set(\'nameMode\',\'full\')',S.nameMode=='full'?'on':'')}${B('Abbreviation','set(\'nameMode\',\'abbr\')',S.nameMode=='abbr'?'on':'')}</div></section>
  <section><h2>URLs</h2><small>Add as a browser source (1920×1080):<br>${location.origin}/overlay.html?g=${G}<br>Options: &amp;scale=1.2 &amp;pos=tr|bl|br</small></section>`},
@@ -91,19 +97,19 @@ style(){const s=S.style,col=(l,k)=>`<div><label>${l}</label><input type=color va
  <section><h2>Colors</h2><div class=g>${col('Bar background','bar')}${col('Text','text')}${col('Accent: banner, lower third','accent')}${col('Score box','scoreBg')}${col('Score numbers','scoreText')}${col('Inning box','inn')}</div>
  <small>Team colors come from the Teams tab.</small></section>
  <section><h2>Shape and size</h2>${rng('Overall size %','scale',50,200)}${rng('Bar opacity %','opacity',20,100)}${rng('Corner roundness','radius',0,24)}${rng('Logo size','logo',20,60)}
- <label>Font</label><select onchange="set('style.font',this.value)">${['Barlow Condensed','Oswald','Roboto Condensed','Montserrat','Bebas Neue','Anton'].map(f=>`<option ${f==s.font?'selected':''}>${f}</option>`).join('')}</select></section>
+ <label>Font</label><select onchange="set('style.font',this.value)">${[...new Set([...FONTS,s.font])].map(f=>`<option ${f==s.font?'selected':''}>${f}</option>`).join('')}</select><label>Any other Google Font (type its exact name)</label><input placeholder="e.g. Black Ops One" onchange="if(this.value.trim())set('style.font',this.value.trim())"></section>
  <section><h2>Details</h2><div class=g>${tgb('Team color strip','strip')}${tgb('Uppercase names','upper')}${tgb('Drop shadow','shadow')}</div></section>
  <section><h2>Position</h2><div class=g>${[['','From link'],['tl','Top left'],['tr','Top right'],['bl','Bottom left'],['br','Bottom right']].map(([k,n])=>B(n,`set('style.pos','${k}')`,s.pos==k?'on':'')).join('')}</div></section>`},
 lineups(){return ['away','home'].map(s=>`<section><h2>${S[s].name}</h2>${S.lineup[s].map((n,i)=>inp('Batting '+(i+1),`lineup.${s}.${i}`,n)).join('')}${inp('Starting pitcher','pitcher.'+s,S.pitcher[s])}</section>`).join('')},
 teams(){const l=ls('bk_teams',[]);return ['away','home'].map(s=>{const t=S[s];return `<section><h2>${s=='away'?'Away':'Home'} team</h2><div class=r>${t.logo?`<img class=lg src="${t.logo}">`:''}<input type=file accept="image/*" onchange="logoUp('${s}',this)"></div>
  ${inp('Name',s+'.name',t.name)}${inp('Abbreviation',s+'.abbr',t.abbr)}<label>Color</label><input type=color value="${t.color}" onchange="set('${s}.color',this.value)" style="height:44px;padding:2px">
  <p>${B('Save to My Teams',`saveTeam('${s}')`)}</p></section>`}).join('')+`<section><h2>My Teams</h2>${l.length?l.map((t,i)=>`<div class=r style="margin:6px 0">${t.logo?`<img class=lg src="${t.logo}">`:''}<b>${t.name}</b>${B('Away',`useTeam(${i},'away')`)}${B('Home',`useTeam(${i},'home')`)}${B('Delete',`delTeam(${i})`)}</div>`).join(''):'<small>Save a team above to reuse it in any game.</small>'}</section>`},
-ads(){const a=ls('bk_ads',{});return [1,2].map(c=>`<section><h2>Channel ${c} · ${c==1?'full screen':'corner'}</h2><label>Image or video URLs, one per line (Dropbox links work with ?raw=1)</label><textarea id=ad${c} rows=5 onchange="saveAds()">${(a[c]||[]).join('\n')}</textarea>
+ads(){const a=ls('bk_ads',{});return `<section><h2>Ad settings</h2><div class=g>${B('Sound: '+(S.adset.sound?'on':'off'),'tg(\'adset.sound\')',S.adset.sound?'on':'')}</div><label>Image ads stay up for this many seconds (0 = until Stop)</label><input type=number min=0 value="${S.adset.sec}" onchange="set('adset.sec',+this.value)"><p><small>Video ads clear themselves when they finish. The preview is always muted. In OBS, tick "Control audio via OBS" on the browser source to hear and mix the sound.</small></p></section>`+[1,2].map(c=>`<section><h2>Channel ${c} · ${c==1?'full screen':'corner'}</h2><label>Image or video URLs, one per line (Dropbox links work with ?raw=1)</label><textarea id=ad${c} rows=5 onchange="saveAds()">${(a[c]||[]).join('\n')}</textarea>
  <div class=g style="margin-top:8px">${B('Play next',`playAd(${c})`,S.ad.ch==c?'on':'')}${B('Stop','commit(()=>S.ad={ch:0,url:\'\',n:0})')}</div></section>`).join('')}};
 function render(){if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&document.activeElement.type!='file'&&document.activeElement.type!='color'&&false)return;
  document.getElementById('nav').innerHTML=Object.entries(TABS).map(([k,n])=>`<button class="${k==tab?'cur':''}" onclick="tab='${k}';render()">${n}</button>`).join('');
  document.getElementById('app').innerHTML=views[tab]();
- const p=document.getElementById('prev');p.style.display=(tab=='style'||tab=='gfx')?'block':'none';if(!p.firstChild){p.innerHTML='<iframe title=Preview src="/overlay.html?g='+G+'"></iframe>'}fit()}
+ const p=document.getElementById('prev');p.style.display=(tab=='style'||tab=='gfx')?'block':'none';if(!p.firstChild){p.innerHTML='<iframe title=Preview src="/overlay.html?preview=1&g='+G+'"></iframe>'}fit()}
 onresize=fit;
 render();conn();
 </script></body></html>
