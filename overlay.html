@@ -1,0 +1,89 @@
+<!doctype html><html><head><meta charset=utf-8><title>Bullpen overlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800&display=swap" rel=stylesheet>
+<style>
+:root{--s:1;--red:#d71920}
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:transparent;font-family:'Barlow Condensed','Arial Narrow',sans-serif;color:#fff}
+.hide{opacity:0;transform:translateY(-14px);pointer-events:none}
+.fx{transition:opacity .35s,transform .35s}
+#bug{position:absolute;left:48px;top:40px;transform-origin:top left;scale:var(--s)}
+#bug.br{left:auto;right:48px;top:auto;bottom:40px;transform-origin:bottom right}
+#bug.bl{top:auto;bottom:40px;transform-origin:bottom left}
+#bug.tr{left:auto;right:48px;transform-origin:top right}
+.bar{display:flex;background:#0d0d0f;border-radius:6px;overflow:hidden;box-shadow:0 4px 18px #0008}
+.teams{display:flex;flex-direction:column;min-width:290px}
+.tr{display:flex;align-items:center;height:46px;border-bottom:1px solid #222;position:relative}
+.tr:last-child{border:0}
+.cl{width:8px;align-self:stretch}
+.tr img{width:34px;height:34px;object-fit:contain;margin:0 10px}
+.tr b{flex:1;font-size:30px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;padding-right:14px}
+.tr .nl{width:10px}
+.tr em{font-style:normal;font-weight:800;font-size:34px;width:56px;text-align:center;background:#f2f2f2;color:#111;align-self:stretch;display:flex;align-items:center;justify-content:center}
+.tr.at:before{content:'';position:absolute;left:-1px;top:16px;border:7px solid transparent;border-left-color:#fff;border-right:0}
+.inn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:50px;font-weight:800;font-size:30px;background:#18181b;line-height:1}
+.inn small{font-size:15px}
+.cnt{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 16px;gap:2px}
+.cnt .c{font-size:30px;font-weight:800;letter-spacing:1px;line-height:1}
+.dots{display:flex;gap:6px}.dots i{width:11px;height:11px;border-radius:50%;border:2px solid #888;box-sizing:border-box}.dots i.f{background:#fff;border-color:#fff}
+.dia{display:flex;align-items:center;padding:0 14px 0 4px}
+.ban{display:flex;justify-content:space-between;margin-top:4px;background:var(--red);height:34px;align-items:center;border-radius:4px;overflow:hidden}
+.ban span{font-size:24px;font-weight:700;padding:0 12px;text-transform:uppercase}
+.ban .p{background:#111;height:100%;display:flex;align-items:center;font-size:20px;padding:0 14px}
+#low{position:absolute;left:90px;bottom:90px;transform:translateX(-40px)}
+#low.hide{transform:translateX(-60px)}
+#low .t{background:var(--red);padding:6px 26px;font-size:46px;font-weight:800;text-transform:uppercase}
+#low .u{background:#0d0d0f;padding:6px 26px;font-size:32px;font-weight:500}
+.card{position:absolute;left:50%;top:50%;translate:-50% -50%;background:#0d0d0f;border-radius:10px;overflow:hidden;box-shadow:0 8px 40px #000a;min-width:560px}
+.card h2{margin:0;padding:14px 24px;font-size:44px;display:flex;align-items:center;gap:16px;text-transform:uppercase}
+.card h2 img{height:56px;width:56px;object-fit:contain}
+.card ol{margin:0;padding:6px 0;list-style:none}
+.card li{display:flex;gap:18px;padding:5px 24px;font-size:34px;font-weight:500;border-top:1px solid #222}
+.card li i{font-style:normal;width:28px;color:#999}
+.card li s{text-decoration:none;margin-left:auto;color:#999}
+table{border-collapse:collapse;font-size:32px}td,th{padding:6px 12px;text-align:center;border-top:1px solid #222}
+th{color:#999;font-weight:500;font-size:24px}td.n{text-align:left;display:flex;gap:12px;align-items:center;font-weight:700;text-transform:uppercase;border:0;min-width:300px}
+td.n img{height:34px;width:34px;object-fit:contain}.tot{font-weight:800;background:#18181b}
+#ad{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
+#ad.c2{inset:auto 0 0 auto;width:620px;height:350px;border:3px solid var(--red)}
+#ad img,#ad video{width:100%;height:100%;object-fit:contain}
+</style></head><body>
+<div id=bug class="fx hide"><div class=bar><div class=teams id=teams></div><div class=inn id=inn></div><div class=cnt id=cnt></div><div class=dia id=dia></div></div><div class=ban id=ban></div></div>
+<div id=low class="fx hide"></div>
+<div id=lu class="card fx hide"></div><div id=bx class="card fx hide"></div><div id=ad class="fx hide"></div>
+<script>
+const q=new URLSearchParams(location.search),G=q.get('g')||'main',$=i=>document.getElementById(i);
+document.documentElement.style.setProperty('--s',q.get('scale')||1);
+if(q.get('pos'))$('bug').classList.add(q.get('pos'));
+let S=null,lastAd='';
+const sum=a=>(a||[]).reduce((x,y)=>x+(y||0),0),nm=t=>S.nameMode=='abbr'?t.abbr:t.name;
+const img=t=>t.logo?`<img src="${t.logo}">`:'<span class=nl></span>';
+const poly=(x,y,f)=>`<polygon points="${x},${y-9} ${x+9},${y} ${x},${y+9} ${x-9},${y}" fill="${f?'#fff':'none'}" stroke="#fff" stroke-width="2"/>`;
+const bat=()=>S.top?'away':'home',fld=()=>S.top?'home':'away';
+function row(s){const t=S[s];return `<div class="tr ${bat()==s?'at':''}"><i class=cl style="background:${t.color}"></i>${img(t)}<b>${nm(t)}</b><em>${sum(S.runs[s])}</em></div>`}
+function draw(){
+  if(!S)return;const v=S.vis;
+  $('bug').classList.toggle('hide',!v.bug);
+  $('teams').innerHTML=row('away')+row('home');
+  $('inn').innerHTML=`<small>${S.top?'▲':'▼'}</small>${S.inn}`;
+  $('cnt').innerHTML=`<div class=c>${S.b}-${S.s}</div><div class=dots>${[0,1,2].map(i=>`<i class="${i<S.o?'f':''}"></i>`).join('')}</div>`;
+  $('dia').innerHTML=`<svg width=64 height=46 viewBox="0 0 64 46">${poly(32,10,S.bases[1])}${poly(12,28,S.bases[2])}${poly(52,28,S.bases[0])}</svg>`;
+  const m=S.banner,nmz=m=='pitcher'?S.pitcher[fld()]:S.lineup[bat()][S.spot[bat()]];
+  $('ban').style.display=m=='off'||!nmz?'none':'flex';
+  $('ban').innerHTML=`<span>${m=='batter'?'AB: ':''}${nmz||''}</span>${m=='pitcher'?`<span class=p>P: ${S.pc}</span>`:''}`;
+  $('low').innerHTML=`<div class=t>${S.lower.title}</div><div class=u>${S.lower.sub}</div>`;$('low').classList.toggle('hide',!v.lower);
+  const side=S.lineupSide,t=S[side];
+  $('lu').innerHTML=`<h2 style="background:${t.color}">${img(t)}${t.name}</h2><ol>${S.lineup[side].map((n,i)=>`<li><i>${i+1}</i>${n||'—'}</li>`).join('')}</ol>${S.pitcher[side]?`<ol><li><i>P</i>${S.pitcher[side]}</li></ol>`:''}`;
+  $('lu').classList.toggle('hide',!v.lineup);
+  const N=Math.max(9,S.inn),cols=[...Array(N).keys()];
+  const cell=(s,i)=>(s=='away'?i<=S.inn-1:(i<S.inn-1||(i==S.inn-1&&!S.top)))?(S.runs[s][i]||0):'';
+  const r=s=>`<tr><td class=n><i class=cl style="width:8px;height:34px;background:${S[s].color}"></i>${img(S[s])}${nm(S[s])}</td>${cols.map(i=>`<td>${cell(s,i)}</td>`).join('')}<td class=tot>${sum(S.runs[s])}</td><td>${S.H[s]}</td><td>${S.E[s]}</td></tr>`;
+  $('bx').innerHTML=`<table><tr><th></th>${cols.map(i=>`<th>${i+1}</th>`).join('')}<th>R</th><th>H</th><th>E</th></tr>${r('away')}${r('home')}</table>`;
+  $('bx').classList.toggle('hide',!v.box);
+  const ad=$('ad'),a=S.ad||{};
+  if(a.ch&&a.url){ad.className='fx c'+a.ch;if(lastAd!=a.url+a.n){lastAd=a.url+a.n;ad.innerHTML=/\.(mp4|webm|mov)(\?|$)/i.test(a.url)?`<video src="${a.url}" autoplay muted playsinline></video>`:`<img src="${a.url}">`}}
+  else{ad.className='fx hide';lastAd=''}
+}
+function conn(){const w=new WebSocket((location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/ws?g='+G);
+  w.onmessage=e=>{const m=JSON.parse(e.data);if(m.state){S=m.state;draw()}};
+  w.onclose=()=>setTimeout(conn,1500);setInterval(()=>w.readyState==1&&w.send('{}'),25000)}
+conn();
+</script></body></html>
