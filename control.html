@@ -15,22 +15,27 @@ h2{margin:0 0 10px;font:800 20px 'Barlow Condensed'}.g{display:grid;gap:8px;grid
 label{display:block;color:var(--mu);font-size:13px;margin:6px 0 2px}input,select,textarea{width:100%;background:#0f1114;color:var(--tx);border:1px solid var(--ln);border-radius:6px;padding:10px;font:15px Barlow}
 .r{display:flex;gap:8px;align-items:center}.r>*{flex:1}.lg{width:44px;height:44px;object-fit:contain;background:#000;border-radius:4px;flex:none}
 small{color:var(--mu)}
+#prev{display:none;position:sticky;top:64px;z-index:1;margin:8px 14px 0;aspect-ratio:16/9;overflow:hidden;border-radius:8px;border:1px solid var(--ln);background:linear-gradient(135deg,#2b3340,#3d4757 55%,#1f2631)}
+#prev iframe{width:1920px;height:1080px;border:0;transform-origin:0 0;position:absolute;left:0;top:0}
+input[type=range]{padding:0;height:36px}
 </style></head><body>
 <header><h1>Bullpen</h1><span id=st>Connecting…</span><button onclick="undo()">Undo</button></header>
-<nav id=nav></nav><main id=app></main>
+<nav id=nav></nav><div id=prev></div><main id=app></main>
 <script>
 const q=new URLSearchParams(location.search),G=q.get('g')||'main';
 let K=q.get('key')||localStorage.bk||'';if(!K)K=prompt('Control key')||'';localStorage.bk=K;
+const DS={bar:'#0d0d0f',text:'#ffffff',accent:'#d71920',scoreBg:'#f2f2f2',scoreText:'#111111',inn:'#18181b',font:'Barlow Condensed',radius:6,opacity:100,scale:100,logo:34,pos:'',strip:1,upper:1,shadow:1};
+const PRE={tnt:{},light:{bar:'#ffffff',text:'#111111',accent:'#1d4ed8',scoreBg:'#111111',scoreText:'#ffffff',inn:'#e8ebf0',radius:4,font:'Montserrat'},navy:{bar:'#0b1f3a',accent:'#f2b705',scoreBg:'#f2b705',scoreText:'#0b1f3a',inn:'#12305a',radius:3,font:'Oswald'},glass:{bar:'#101418',accent:'#0d9488',scoreBg:'#3a4350',scoreText:'#ffffff',inn:'#1b2128',radius:16,opacity:72,font:'Montserrat'}};
 const T=(n,a,c)=>({name:n,abbr:a,color:c,logo:''});
 let S={away:T('Away','AWY','#c8102e'),home:T('Home','HOM','#0c2340'),runs:{away:[],home:[]},H:{away:0,home:0},E:{away:0,home:0},
  inn:1,top:true,b:0,s:0,o:0,bases:[0,0,0],pc:0,lineup:{away:Array(9).fill(''),home:Array(9).fill('')},spot:{away:0,home:0},
- pitcher:{away:'',home:''},vis:{bug:1,lower:0,lineup:0,box:0},banner:'pitcher',nameMode:'full',lower:{title:'',sub:''},lineupSide:'away',ad:{ch:0,url:'',n:0}};
+ pitcher:{away:'',home:''},vis:{bug:1,lower:0,lineup:0,box:0},banner:'pitcher',nameMode:'full',lower:{title:'',sub:''},lineupSide:'away',ad:{ch:0,url:'',n:0},style:{...DS}};
 let hist=[],ws,tab='live',ctl=false,got=false;
-const TABS={live:'Live',gfx:'Graphics',lineups:'Lineups',teams:'Teams',ads:'Ads'};
+const TABS={live:'Live',gfx:'Graphics',style:'Style',lineups:'Lineups',teams:'Teams',ads:'Ads'};
 const st=t=>document.getElementById('st').textContent=t,ls=(k,d)=>{try{return JSON.parse(localStorage[k])}catch{return d}};
 function conn(){ws=new WebSocket((location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/ws?g='+G+'&key='+encodeURIComponent(K));
  ws.onmessage=e=>{const m=JSON.parse(e.data);if('ctl'in m){ctl=m.ctl;st(ctl?'Live · '+G:'Wrong key — add ?key=… to the URL')}
-  if(m.state){S=m.state;render()}else if('ctl'in m&&ctl)push()};
+  if(m.state){S=m.state;S.style=Object.assign({},DS,S.style);render()}else if('ctl'in m&&ctl)push()};
  ws.onclose=()=>{st('Reconnecting…');setTimeout(conn,1500)}}
 const push=()=>ws.readyState==1&&ws.send(JSON.stringify({state:S}));
 function commit(fn){hist.push(JSON.stringify(S));if(hist.length>60)hist.shift();fn();push();render()}
@@ -51,6 +56,8 @@ function set(p,v){commit(()=>{const k=p.split('.');let o=S;k.slice(0,-1).forEach
 const tg=p=>{const k=p.split('.');let o=S;k.forEach(x=>o=o[x]);set(p,o?0:1)};
 const inp=(l,p,v)=>`<label>${l}</label><input value="${(v??'').toString().replace(/"/g,'&quot;')}" onchange="set('${p}',this.value)">`;
 const B=(l,f,c='')=>`<button class="${c}" onclick="${f}">${l}</button>`;
+function ss(k,v){S.style[k]=v;push()}
+function fit(){const p=document.getElementById('prev'),f=p.firstChild;if(f)f.style.transform='scale('+p.clientWidth/1920+')'}
 function logoUp(s,el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas'),m=160,k=Math.min(1,m/Math.max(i.width,i.height));c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);set(s+'.logo',c.toDataURL('image/png'))};i.src=r.result};r.readAsDataURL(f)}
 function saveTeam(s){const l=ls('bk_teams',[]),t=JSON.parse(JSON.stringify(S[s])),i=l.findIndex(x=>x.name==t.name);i<0?l.push(t):l[i]=t;localStorage.bk_teams=JSON.stringify(l);render()}
 function useTeam(i,s){commit(()=>S[s]=ls('bk_teams',[])[i])}
@@ -77,6 +84,16 @@ gfx(){return `<section><h2>On air</h2><div class=g>${B('Scorebug','tg(\'vis.bug\
  <section><h2>Lineup graphic</h2><div class=g>${['away','home'].map(s=>B(S[s].name,`set('lineupSide','${s}')`,S.lineupSide==s?'on':'')).join('')}</div></section>
  <section><h2>Team names on the bug</h2><div class=g>${B('Full name','set(\'nameMode\',\'full\')',S.nameMode=='full'?'on':'')}${B('Abbreviation','set(\'nameMode\',\'abbr\')',S.nameMode=='abbr'?'on':'')}</div></section>
  <section><h2>URLs</h2><small>Add as a browser source (1920×1080):<br>${location.origin}/overlay.html?g=${G}<br>Options: &amp;scale=1.2 &amp;pos=tr|bl|br</small></section>`},
+style(){const s=S.style,col=(l,k)=>`<div><label>${l}</label><input type=color value="${s[k]}" oninput="ss('${k}',this.value)" style="height:44px;padding:2px"></div>`,
+ rng=(l,k,a,b)=>`<label>${l}: ${s[k]}</label><input type=range min=${a} max=${b} value="${s[k]}" oninput="ss('${k}',+this.value);this.previousElementSibling.textContent='${l}: '+this.value">`,
+ tgb=(l,k)=>B(l,`tg('style.${k}')`,s[k]?'on':'');
+ return `<section><h2>Presets</h2><div class=g>${[['tnt','Broadcast red'],['light','Clean white'],['navy','Navy and gold'],['glass','Glass']].map(([k,n])=>B(n,`commit(()=>S.style={...DS,...PRE['${k}']})`)).join('')}</div></section>
+ <section><h2>Colors</h2><div class=g>${col('Bar background','bar')}${col('Text','text')}${col('Accent: banner, lower third','accent')}${col('Score box','scoreBg')}${col('Score numbers','scoreText')}${col('Inning box','inn')}</div>
+ <small>Team colors come from the Teams tab.</small></section>
+ <section><h2>Shape and size</h2>${rng('Overall size %','scale',50,200)}${rng('Bar opacity %','opacity',20,100)}${rng('Corner roundness','radius',0,24)}${rng('Logo size','logo',20,60)}
+ <label>Font</label><select onchange="set('style.font',this.value)">${['Barlow Condensed','Oswald','Roboto Condensed','Montserrat','Bebas Neue','Anton'].map(f=>`<option ${f==s.font?'selected':''}>${f}</option>`).join('')}</select></section>
+ <section><h2>Details</h2><div class=g>${tgb('Team color strip','strip')}${tgb('Uppercase names','upper')}${tgb('Drop shadow','shadow')}</div></section>
+ <section><h2>Position</h2><div class=g>${[['','From link'],['tl','Top left'],['tr','Top right'],['bl','Bottom left'],['br','Bottom right']].map(([k,n])=>B(n,`set('style.pos','${k}')`,s.pos==k?'on':'')).join('')}</div></section>`},
 lineups(){return ['away','home'].map(s=>`<section><h2>${S[s].name}</h2>${S.lineup[s].map((n,i)=>inp('Batting '+(i+1),`lineup.${s}.${i}`,n)).join('')}${inp('Starting pitcher','pitcher.'+s,S.pitcher[s])}</section>`).join('')},
 teams(){const l=ls('bk_teams',[]);return ['away','home'].map(s=>{const t=S[s];return `<section><h2>${s=='away'?'Away':'Home'} team</h2><div class=r>${t.logo?`<img class=lg src="${t.logo}">`:''}<input type=file accept="image/*" onchange="logoUp('${s}',this)"></div>
  ${inp('Name',s+'.name',t.name)}${inp('Abbreviation',s+'.abbr',t.abbr)}<label>Color</label><input type=color value="${t.color}" onchange="set('${s}.color',this.value)" style="height:44px;padding:2px">
@@ -85,6 +102,8 @@ ads(){const a=ls('bk_ads',{});return [1,2].map(c=>`<section><h2>Channel ${c} · 
  <div class=g style="margin-top:8px">${B('Play next',`playAd(${c})`,S.ad.ch==c?'on':'')}${B('Stop','commit(()=>S.ad={ch:0,url:\'\',n:0})')}</div></section>`).join('')}};
 function render(){if(document.activeElement&&/INPUT|TEXTAREA/.test(document.activeElement.tagName)&&document.activeElement.type!='file'&&document.activeElement.type!='color'&&false)return;
  document.getElementById('nav').innerHTML=Object.entries(TABS).map(([k,n])=>`<button class="${k==tab?'cur':''}" onclick="tab='${k}';render()">${n}</button>`).join('');
- document.getElementById('app').innerHTML=views[tab]()}
+ document.getElementById('app').innerHTML=views[tab]();
+ const p=document.getElementById('prev');p.style.display=(tab=='style'||tab=='gfx')?'block':'none';if(!p.firstChild){p.innerHTML='<iframe title=Preview src="/overlay.html?g='+G+'"></iframe>'}fit()}
+onresize=fit;
 render();conn();
 </script></body></html>
