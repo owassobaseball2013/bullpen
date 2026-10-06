@@ -1,7 +1,7 @@
 const express=require('express'),http=require('http'),fs=require('fs'),{WebSocketServer}=require('ws');
 const KEY=process.env.CONTROL_KEY||'changeme',F=process.env.DATA_FILE||'data.json';
 let games={};try{games=JSON.parse(fs.readFileSync(F))}catch{}
-const app=express();app.use(express.static('public'));app.get('/',(_,r)=>r.redirect('/control.html'));
+const app=express();app.use(express.static('public',{etag:false,lastModified:false,setHeaders:r=>r.setHeader('Cache-Control','no-store')}));app.get('/',(_,r)=>r.redirect('/control.html'));
 const srv=http.createServer(app),wss=new WebSocketServer({server:srv,path:'/ws',maxPayload:5e6});
 let t;const save=()=>{clearTimeout(t);t=setTimeout(()=>fs.writeFile(F,JSON.stringify(games),()=>{}),500)};
 wss.on('connection',(ws,req)=>{
