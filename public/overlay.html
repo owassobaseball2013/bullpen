@@ -45,10 +45,29 @@ td.n img{height:34px;width:34px;object-fit:contain}.tot{font-weight:800;backgrou
 #ad{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center}
 #ad.c2{inset:auto 0 0 auto;width:620px;height:350px;border:3px solid var(--red)}
 #ad img,#ad video{width:100%;height:100%;object-fit:contain}
+.spon{display:flex;align-items:center;justify-content:center;padding:0 12px;background:var(--sb,#f2f2f2)}
+.spon img{max-height:36px;max-width:130px;object-fit:contain}
+#pre{position:absolute;left:50%;bottom:110px;width:1560px;translate:-50% 0}#pre.hide{transform:translateY(40px)}
+.ptab{width:250px;height:90px;margin:0 auto;background:var(--sb,#f2f2f2);border-radius:8px 8px 0 0;display:flex;align-items:center;justify-content:center}
+.ptab img{max-width:210px;max-height:70px;object-fit:contain}
+.prow{display:flex;height:230px}.prow>div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px;box-sizing:border-box;color:#fff}
+.prow .pl{box-shadow:inset 0 0 0 999px rgba(255,255,255,.12)}.pl img{max-width:90%;max-height:190px;object-fit:contain}
+.pn{font-size:48px;font-weight:700;line-height:1;text-transform:uppercase}.pr{font-size:60px;font-weight:800;margin-top:14px}
+.pst{background:var(--bar,#0d0d0f);margin:0 34px;height:64px;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;text-transform:uppercase;color:var(--tx,#fff);border-radius:0 0 8px 8px}
+#bk{position:absolute;left:160px;bottom:90px;width:700px;overflow:hidden;border-radius:6px}
+.bt{display:flex;height:64px}.bt .s{width:200px;background:var(--bar,#0d0d0f);display:flex;align-items:center;justify-content:center}
+.bt .s img{max-height:48px;max-width:170px;object-fit:contain}
+.bt .m{flex:1;background:var(--sb,#f2f2f2);color:var(--sbt,#111);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;text-transform:uppercase}
+.bt .i{width:150px;background:var(--bar,#0d0d0f);color:var(--tx,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:.95}
+.bt .i small{font-size:20px}.bt .i b{font-size:36px}
+.br2{display:flex;align-items:center;height:90px;color:#fff}.br2 img{width:90px;height:90px;object-fit:contain;margin:0 14px 0 8px}
+.br2 .sp{width:20px}.br2 b{flex:1;font-size:36px;line-height:1;text-transform:uppercase}.br2 em{font-style:normal;font-size:72px;font-weight:800;width:110px;text-align:center}
+.br2 .he{width:100px;font-size:24px;line-height:1.2;font-weight:500}
+.bn{background:var(--bar,#0d0d0f);color:var(--tx,#fff);height:44px;display:flex;align-items:center;padding:0 18px;font-size:26px;text-transform:uppercase}
 </style></head><body>
-<div id=bug class="fx hide"><div class=bar><div class=teams id=teams></div><div class=inn id=inn></div><div class=cnt id=cnt></div><div class=dia id=dia></div></div><div class=ban id=ban></div></div>
+<div id=bug class="fx hide"><div class=bar><div class=teams id=teams></div><div class=inn id=inn></div><div class=cnt id=cnt></div><div class=dia id=dia></div><div class=spon id=spon></div></div><div class=ban id=ban></div></div>
 <div id=low class="fx hide"></div>
-<div id=lu class="card fx hide"></div><div id=bx class="card fx hide"></div><div id=ad class="fx hide"></div>
+<div id=lu class="card fx hide"></div><div id=bx class="card fx hide"></div><div id=pre class="fx hide"></div><div id=bk class="fx hide"></div><div id=ad class="fx hide"></div>
 <script>
 const q=new URLSearchParams(location.search),G=q.get('g')||'main',$=i=>document.getElementById(i);
 const DS={bar:'#0d0d0f',text:'#ffffff',accent:'#d71920',scoreBg:'#f2f2f2',scoreText:'#111111',inn:'#18181b',font:'Barlow Condensed',radius:6,opacity:100,scale:100,logo:34,pos:'',strip:1,upper:1,shadow:1};
@@ -59,8 +78,8 @@ function sty(){const s=Object.assign({},DS,S.style||{}),r=document.documentEleme
   p('--s',(+q.get('scale')||1)*s.scale/100);document.body.classList.toggle('nostrip',!s.strip);
   const pos=s.pos||q.get('pos')||'tl';['tr','bl','br'].forEach(c=>$('bug').classList.toggle(c,c==pos));
   if(s.font!=curFont){curFont=s.font;if(!fontLink){fontLink=document.createElement('link');fontLink.rel='stylesheet';document.head.appendChild(fontLink)}
-    fontLink.href='https://fonts.googleapis.com/css2?family='+s.font.replace(/ /g,'+')+(/Bebas|Anton/.test(s.font)?'':':wght@500;700')+'&display=swap'}}
-let S=null,lastAd='';
+    const b='https://fonts.googleapis.com/css2?family='+s.font.replace(/ /g,'+');fontLink.onerror=()=>{fontLink.onerror=null;fontLink.href=b+'&display=swap'};fontLink.href=b+(/Bebas|Anton|Russo|Staatliches|Alfa|Bungee|Fjalla/.test(s.font)?'':':wght@500;700')+'&display=swap'}}
+let S=null,lastAd='',adDone='';
 const sum=a=>(a||[]).reduce((x,y)=>x+(y||0),0),nm=t=>S.nameMode=='abbr'?t.abbr:t.name;
 const img=t=>t.logo?`<img src="${t.logo}">`:'<span class=nl></span>';
 const poly=(x,y,f)=>`<polygon points="${x},${y-9} ${x+9},${y} ${x},${y+9} ${x-9},${y}" fill="${f?'currentColor':'none'}" stroke="currentColor" stroke-width="2"/>`;
@@ -85,9 +104,20 @@ function draw(){
   const r=s=>`<tr><td class=n><i class=cl style="width:8px;height:34px;background:${S[s].color}"></i>${img(S[s])}${nm(S[s])}</td>${cols.map(i=>`<td>${cell(s,i)}</td>`).join('')}<td class=tot>${sum(S.runs[s])}</td><td>${S.H[s]}</td><td>${S.E[s]}</td></tr>`;
   $('bx').innerHTML=`<table><tr><th></th>${cols.map(i=>`<th>${i+1}</th>`).join('')}<th>R</th><th>H</th><th>E</th></tr>${r('away')}${r('home')}</table>`;
   $('bx').classList.toggle('hide',!v.box);
-  const ad=$('ad'),a=S.ad||{};
-  if(a.ch&&a.url){ad.className='fx c'+a.ch;if(lastAd!=a.url+a.n){lastAd=a.url+a.n;ad.innerHTML=/\.(mp4|webm|mov)(\?|$)/i.test(a.url)?`<video src="${a.url}" autoplay muted playsinline></video>`:`<img src="${a.url}">`}}
-  else{ad.className='fx hide';lastAd=''}
+  const sp=S.sponsor||{},pe=S.pre||{},bk=S.brk||{},lg=t=>t.logo?`<img src="${t.logo}">`:'',ord=n=>{const s=['th','st','nd','rd'],r=n%100;return n+(s[(r-20)%10]||s[r]||s[0])};
+  $('spon').style.display=sp.logo&&sp.bug?'flex':'none';$('spon').innerHTML=sp.logo?`<img src="${sp.logo}">`:'';
+  const A=S.away,Hm=S.home;
+  $('pre').innerHTML=`${sp.logo?`<div class=ptab><img src="${sp.logo}"></div>`:''}<div class=prow><div class=pl style="background:${A.color}">${lg(A)}</div><div style="background:${A.color}"><div class=pn>${A.name}</div><div class=pr>${pe.a||''}</div></div><div style="background:${Hm.color}"><div class=pn>${Hm.name}</div><div class=pr>${pe.h||''}</div></div><div class=pl style="background:${Hm.color}">${lg(Hm)}</div></div>${pe.sub?`<div class=pst>${pe.sub}</div>`:''}`;
+  $('pre').classList.toggle('hide',!v.pre);
+  const tr=s=>`<div class=br2 style="background:${S[s].color}">${lg(S[s])||'<span class=sp></span>'}<b>${S[s].name}</b><em>${sum(S.runs[s])}</em><div class=he>H: ${S.H[s]}<br>E: ${S.E[s]}</div></div>`,note=bk.note||(S.pitcher[fld()]?'P: '+S.pitcher[fld()]:'');
+  $('bk').innerHTML=`<div class=bt><div class=s>${lg(sp)}</div><div class=m>${bk.title||''}</div><div class=i><small>${S.top?'TOP':'BOT'}</small><b>${ord(S.inn)}</b></div></div>${tr('away')}${tr('home')}${note?`<div class=bn>${note}</div>`:''}`;
+  $('bk').classList.toggle('hide',!v.brk);
+  const ad=$('ad'),a=S.ad||{},as=S.adset||{},key=a.url+a.n;
+  if(a.ch&&a.url&&adDone!=key){ad.className='fx c'+a.ch;
+    if(lastAd!=key){lastAd=key;ad.innerHTML='';const isV=/\.(mp4|webm|mov|m4v)(\?|$)/i.test(a.url),e=document.createElement(isV?'video':'img');e.src=a.url;ad.appendChild(e);
+      if(isV){e.playsInline=true;e.muted=!as.sound||!!q.get('preview');e.onended=()=>{adDone=key;draw()};e.play().catch(()=>{e.muted=true;e.play().catch(()=>{})})}
+      else if(as.sec>0)setTimeout(()=>{adDone=key;draw()},as.sec*1000)}}
+  else{ad.className='fx hide';if(!a.ch){lastAd='';adDone=''}}
 }
 function conn(){const w=new WebSocket((location.protocol=='https:'?'wss':'ws')+'://'+location.host+'/ws?g='+G);
   w.onmessage=e=>{const m=JSON.parse(e.data);if(m.state){S=m.state;draw()}};
